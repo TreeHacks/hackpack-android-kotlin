@@ -429,6 +429,3 @@ Android development can be overwhelming in the beginning but there are lots of l
 **_Happy Hacking!_**
 
 
-
-
-
