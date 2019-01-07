@@ -42,11 +42,10 @@ class NotesActivity : AppCompatActivity() {
             imageButton.setText(R.string.update_note)
         }
 
-        imageButton.setOnClickListener(View.OnClickListener {
+        imageButton.setOnClickListener {
             addNote()
             startMainActivity()
-            return@OnClickListener
-        })
+        }
 
 
         if (noteId != null) {

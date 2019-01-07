@@ -1,22 +1,21 @@
-# Android HackPack Tutorial
+# Android HackPack Tutorial (Kotlin Version)
 
 ### Overview
-For the Android Hackpack, we are going to develop **HackerPad** - A Simple Note taking application. In this tutorial, you'll learn basic process behind making android apps such as developing an UI, storing data locally, opening activity from another activity and much more. 
+For the Android Hackpack, we are going to develop **HackerPad** - A Simple Note taking application. The tutorial assumes a working knowledge of Kotlin. [(If you need crash course in Kotlin, visit here)](https://guides.codepath.com/android/Using-Kotlin-for-Android-development). 
+In this tutorial, you'll learn basic process behind making android apps such as developing an UI, storing data locally, opening activity from another activity and much more. 
 So Let's get started!
 
 ### Create an Android Project
 * If you don't have [Android Project](https://developer.android.com/studio/) installed on your computer, install it from [here](https://developer.android.com/studio/).
-
 * In the **Welcome to Android Studio** window, click **Start a new Android Studio project**.
   ![Android Studio](/docs_assets/as.png)
   Or if you have a project opened, select **File > New Project**.
-
 * In the **Create New Project** window, enter the following values.
   * **Application Name** : "HackerPad"
   * **Company Domain** : "your_name.io"
-  Leave the other options as they are.
-
+    Leave the other options as they are.
 * For all the other setup screens **select default values** and hit next.
+* Check the box that says **Include Kotlin support.**![img](/docs_assets/kotlinSupport.png)
 
 After some processing, Android Studio opens the IDE.
 
@@ -133,7 +132,7 @@ Also there is **card view widget** added which includes a **Linear Layout** whic
 
 Similary, for notes activity, create a new activity by **File > New > Activity > Empty Activity** , name the activity to NotesAcitivity and selecting all the other default values. This will generate two files:-
 
-- **NotesActivity.java** in app > java > io.your_name.hackerpad 
+- **NotesActivity.kt** in app > java > io.your_name.hackerpad 
 - **activity_notes** in app > res > layout
 
 Edit activity_notes with this repository's activity_notes file. Its a simple layout file with two field to take user inputs as title & note along with a button to add/update the note.
@@ -150,7 +149,7 @@ So, we will define a Note class with following fields:
 - isBookmarked - A boolean feild which will show if a note is bookmarked or not.
 
 Create a new **data** directory in **app > java > packageName**. In this directoy we will create two more directory, **model** which will contain our plain object and **repository** which will handle our data storage. 
-Copy the [Note.java](https://github.com/navi25/hackpack-android/blob/master/app/src/main/java/com/treehacks/hackpack_android/data/model/Note.java) file present in this repository into your project. 
+Copy the [Note.kt]() file present in this repository into your project. 
 
 ### Now lets define our Data handling
 
@@ -160,13 +159,13 @@ We will be following Reposiotry pattern to handle our data which is best explain
 
 Now let's create a interface first to define our Data handling functions. Create **INotesRepository** in the repository directory created in data folder and define it as follows:
 
-```java
+```kotlin
 public interface INotesRepository {
-    List<Note> getNotesList();
-    void add(Note note);
-    void update(Note note);
-    Note getNoteById(String id);
-    boolean deleteNoteById(String id);
+    fun getNotesList() : List<Note>
+    fun add(note: Note)
+    fun update(note: Note)
+    fun getNoteById(id: String): Note?
+    fun deleteNoteById(id: String): Boolean
 }
 ```
 
@@ -177,44 +176,56 @@ Lets implement these in a **LocalNotesRepository** class.
 Copy LocalNotesRepository.java file to your **repository** directory. Remember to change the package name. 
 The following code is self explanatory, we have a arraylist of Note and we are using it for doing our CRUD operations.
 
-```java
-
- 	private List<Note> notesList = new ArrayList<>();
-
-    public void add(Note note){
-        String id = UUID.randomUUID().toString();
-        note.setId(id);
-        notesList.add(note);
+```kotlin
+ override fun getNotesList(): List<Note> {
+        if (notes.size != 0) return notes
+        val gson = Gson()
+        val json = sharedPreferences.getString(prefsKey, "")
+        if (json!!.trim { it <= ' ' }.isEmpty()) {
+            return notes
+        }
+        val type = object : TypeToken<List<Note>>() {}.type
+        notes = gson.fromJson<MutableList<Note>>(json, type)
+        return notes
     }
 
-    public Note getNoteById(String id){
-        for (Note note:notesList) {
-            if(note.getId().equals(id)){
-                return note;
+    override fun add(note: Note) {
+        val id = UUID.randomUUID().toString()
+        note.id = id
+        notes.add(note)
+    }
+
+
+    override fun getNoteById(id: String): Note? {
+        for (note in notes) {
+            if (note.id == id) {
+                return note
             }
         }
 
-        return null;
+        return null
     }
 
-    public void update(Note newNote) {
-        for (Note note:notesList) {
-            if(note.getId().equals(newNote.getId())){
-                note.update(newNote.getTitle(), newNote.getNote());
+    override fun update(newNote: Note) {
+        for (note in notes) {
+            if (note.id == newNote.id) {
+                note.update(newNote.title, newNote.note)
             }
         }
     }
 
 
-    public boolean deleteNoteById(String id){
-        for (Note note:notesList) {
-            if(note.getId().equals(id)){
-                notesList.remove(note);
-                return true; //Success | Note with given id successfully deleted
+    override fun deleteNoteById(id: String): Boolean {
+        for (note in notes) {
+            if (note.id == id) {
+                notes.remove(note)
+                return true //Success | Note with given id successfully deleted
             }
         }
-        return false; // Failure | Note with given id not found
+        return false // Failure | Note with given id not found
     }
+
+ 
 ```
 
 ### Local Storage
@@ -225,32 +236,31 @@ We need to get access to this object from Android and we will do it in **App** f
 
 Copy **App** class present in **app>Java>packageName** to your **app>Java>packageName** 
 
-```java
+```kotlin
 public class App extends Application {
 
-    //...
-    
-      public String getPrefKey() { return prefKey; }
-    
-      public SharedPreferences getSharedPrefs(){
-        return this.getSharedPreferences(BuildConfig.APPLICATION_ID,Context.MODE_PRIVATE);
-      }
+    internal var testingMode = false
 
-    public INotesRepository getNotesRepository(){
-        if(testingMode){
-            return DummyNotesRepository.getInstance(this);
-        }
-        return LocalNotesRepository.getInstance(this);
-    }
+    val prefKey = BuildConfig.APPLICATION_ID + "notesList"
 
-    public void saveNotes(){
-        List<Note> noteList = getNotesRepository().getNotesList();
-        Gson gson = new Gson();
-        String json = gson.toJson(noteList);
-        getSharedPrefs().edit()
-                .putString(prefKey,json)
-                .apply();
+    val notesRepository: INotesRepository
+        get() = if (testingMode) {
+            DummyNotesRepository.getInstance(this)
+        } else LocalNotesRepository.getInstance(this)
+
+    val sharedPrefs: SharedPreferences
+        get() = this.getSharedPreferences(BuildConfig.APPLICATION_ID, Context.MODE_PRIVATE)
+
+    fun saveNotes() {
+        val noteList = notesRepository.getNotesList()
+        val gson = Gson()
+        val json = gson.toJson(noteList)
+        sharedPrefs.edit()
+                .putString(prefKey, json)
+                .apply()
     }
+    
+     
     
 }
 ```
@@ -264,132 +274,133 @@ Now its time to integrate various components and make it work. For that create a
 Now lets see what we are doing there. This is MainActivity. For brevity, I am showing only necessary codes.
 
 ```java
- 	//MainActivity.java
-    private ListView noteListView;
+ 	//MainActivity.kt
+    private var noteListView: ListView? = null
 
-    private INotesRepository notesRepo;
+    private var notesRepo: INotesRepository? = null
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
 
-        //Setting up references for the views present in activity_main layout file
-        noteListView = findViewById(R.id.noteListView);
-        TextView takeNoteView = findViewById(R.id.takeNote);
+        noteListView = findViewById(R.id.noteListView)
+        val takeNoteView = findViewById<TextView>(R.id.takeNote)
+
         //You can use below AudioNoteView to add audio note functionality to the app
-        //ImageView takeAudioNoteView = findViewById(R.id.takeAudioNoteView);
+        //        ImageView takeAudioNoteView = findViewById(R.id.takeAudioNoteView);
 
-        //Getting reference of NotesRepository from App class
-        notesRepo = ((App)getApplication()).getNotesRepository();
+        notesRepo = (application as App).notesRepository
 
-        /**
-        * Setting up OnClickListener to handle onClick event for TakeNoteView
-        * It start NotesActivity on onClick event.
-        **/
-        takeNoteView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startTakeNoteActivity();
-            }
-        });
+        takeNoteView.setOnClickListener { startTakeNoteActivity() }
 
-        // Populate the current listview with notes.
-        populateNotes();
+        populateNotes()
     }
+
+    override fun onResume() {
+        super.onResume()
+        populateNotes()
+    }
+
+    
 ```
 
 Here we have defined variables to access our previously created noteListView and created a reference for notesRepo and then in onCreate() method which is a activity lifecycle callback. we are setting up the references appropriately.
 
-```java
+```kotlin
 	//This is the function to start a new activity from current main activity
-	private void startTakeNoteActivity(){
+    private fun startTakeNoteActivity() {
         //This is the intent class which is a special object to start a new action in Android
-        Intent intent = new Intent(this, NotesActivity.class);
+        val intent = Intent(this, NotesActivity::class.java)
         //This is a in built function that starts a new activity as per the intent specs
-        startActivity(intent);
+        startActivity(intent)
     }
 
-	//This is overloaded function to open note activity. This will be used for updating notes
-    private void startTakeNoteActivity(Note note){
-        Intent intent = new Intent(this, NotesActivity.class);
-        intent.putExtra("noteId",note.getId());
-        startActivity(intent);
+    //This is overloaded function to open note activity. This will be used for updating notes
+    private fun startTakeNoteActivity(note: Note) {
+        val intent = Intent(this, NotesActivity::class.java)
+        intent.putExtra("noteId", note.id)
+        startActivity(intent)
     }
 
-	//This is function to show current notes in a list view
-    private void populateNotes(){
-		
+    //This is function to show current notes in a list view
+    private fun populateNotes() {
+
         //Get reference to the Note List from notes repository
-        final List<Note> noteList = notesRepo.getNotesList();
+        val noteList = notesRepo!!.getNotesList()
 
         /**
-        * This is the adapter that creates the passed view (R.layout.note_card_view)
-        * and populate a Text view present in the view with the passed data objects
-        **/
-        final ArrayAdapter<Note> noteArrayAdapter = new ArrayAdapter<Note>(
-                this, R.layout.note_card_view, R.id.note, noteList);
+         * This is the adapter that creates the passed view (R.layout.note_card_view)
+         * and populate a Text view present in the view with the passed data objects
+         **/
+        val noteArrayAdapter = ArrayAdapter(
+                this, R.layout.note_card_view, R.id.note, noteList)
 
-        
-        noteArrayAdapter.notifyDataSetChanged();
+        noteArrayAdapter.notifyDataSetChanged()
 
-        //Some decoration functions for decorating our Noteview
-        noteListView.setAdapter(noteArrayAdapter);
-        noteListView.setPadding(8,8,8,8);
-        noteListView.setDividerHeight(8);
+        noteListView?.apply { 
+            adapter = noteArrayAdapter
+            setPadding(8, 8, 8, 8)
+            dividerHeight = 8
+        }
 
-        //Setting Click listener for individual Note Item
-        noteListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id){
-               	//Get Note object present at that position
-                Note note = (Note)parent.getAdapter().getItem(position);
-                //Start Note Activity to update it 
-                startTakeNoteActivity(note);
-            }
-        });
+        noteListView?.onItemClickListener = AdapterView.OnItemClickListener { parent, view, position, id ->
+            val note = parent.adapter.getItem(position) as Note
+            startTakeNoteActivity(note)
+        }
     }
 
+    override fun onStop() {
+        super.onStop()
+        (application as App).saveNotes()
+    }
 ```
 
 Now lets check how we are implementing NotesActitivty.java
 
-```java
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_notes);
-        
-        //Get Reference to the notes repository
-        notesRepo = ((App)getApplication()).getNotesRepository();
+```kotlin
+    private var titleView: EditText? = null
+    private var noteView: EditText? = null
+    private var notesRepo: INotesRepository? = null
+    private var noteId: String? = null
 
-        //Set references to TextView defined in activity_notes layout file
-        titleView = findViewById(R.id.noteTitle);
-        noteView = findViewById(R.id.note);
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_notes)
 
-        Button imageButton = findViewById(R.id.imageButton);
-        imageButton.setText(R.string.add_note);
+        val bundle = intent.extras
 
-       //Set on Click Listener for ImageButton click which is Add button
-        imageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //Add Note and return to the main activity
-                addNote();
-                startMainActivity();
-                return;
-            }
-        });
+        if (bundle != null) {
+            noteId = bundle.getString("noteId")
+        }
 
-        /**
-        * To bring focus to note view. This brings the functionlity of writing as soon as 
-        * this activity is launched.
-        **/
-        noteView.requestFocus();
+        notesRepo = (application as App).notesRepository
+
+        titleView = findViewById(R.id.noteTitle)
+        noteView = findViewById(R.id.note)
+
+        val imageButton = findViewById<Button>(R.id.imageButton)
+
+        imageButton.setText(R.string.add_note)
+
+        if (noteId != null) {
+            imageButton.setText(R.string.update_note)
+        }
+
+        imageButton.setOnClickListener {
+            addNote()
+            startMainActivity()
+        }
+
+        if (noteId != null) {
+            val note = notesRepo!!.getNoteById(noteId!!)
+            titleView?.setText(note?.title)
+            noteView?.setText(note?.note)
+            return
+        }
+
+        noteView?.requestFocus()
 
     }
-
-
 ```
 
 

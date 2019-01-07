@@ -28,9 +28,7 @@ class LocalNotesRepository(application: Application) : INotesRepository {
         if (json!!.trim { it <= ' ' }.isEmpty()) {
             return notes
         }
-        val type = object : TypeToken<List<Note>>() {
-
-        }.type
+        val type = object : TypeToken<List<Note>>() {}.type
         notes = gson.fromJson<MutableList<Note>>(json, type)
         return notes
     }
