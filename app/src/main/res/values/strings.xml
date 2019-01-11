@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">hackpack-android-kotlin</string>
+    <string name="add_note_placeholder">&#160;&#160;&#160;Take a note...</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="add_note">Add</string>
+    <string name="update_note">Update</string>
+    <string name="audio_note_placeholder">TakeAudioNotes</string>
+</resources>
