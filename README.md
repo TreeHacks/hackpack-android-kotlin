@@ -426,6 +426,11 @@ Android development can be overwhelming in the beginning but there are lots of l
 - [Android Fundamentals Training by Google Codelab](https://developer.android.com/courses/fundamentals-training/toc-v2) - A full list of code lab style tutorial by Google for teaching android from fundamentals to advanced. (Highly recommended!)
 - [Sunshine Weather App - Google CodeLab](https://codelabs.developers.google.com/codelabs/build-app-with-arch-components/index.html?index=..%2F..index#0) - A good end to end app following recommended architecture pattern.
 
-**_Happy Hacking!_**
+# About HackPacks 🌲
 
+HackPacks are built by the [TreeHacks](https://www.treehacks.com/) team and contributors to help hackers build great projects at our hackathon that happens every February at Stanford. We believe that everyone of every skill level can learn to make awesome things, and this is one way we help facilitate hacker culture. We open source our hackpacks (along with our internal tech) so everyone can learn from and use them! Feel free to use these at your own hackathons, workshops, and anything else that promotes building :) 
+
+If you're interested in attending TreeHacks, you can apply on our [website](https://www.treehacks.com/) during the application period.
+
+You can follow us here on [GitHub](https://github.com/treehacks) to see all the open source work we do (we love issues, contributions, and feedback of any kind!), and on [Facebook](https://facebook.com/treehacks), [Twitter](https://twitter.com/hackwithtrees), and [Instagram](https://instagram.com/hackwithtrees) to see general updates from TreeHacks. 
 
